@@ -1,0 +1,67 @@
+OIL_VERSION = "2.5" : "test" ;
+
+IMPLEMENTATION trampoline {
+/* This fix the default STACKSIZE of tasks */
+TASK {
+    UINT32 STACKSIZE = 16384 ;
+} ;
+/* This fix the default STACKSIZE of ISRs */
+ISR {
+    UINT32 STACKSIZE = 16384 ;
+} ;
+};
+
+
+CPU test 
+{    
+    OS config 
+    {
+        STATUS = STANDARD;
+        BUILD = TRUE 
+        {
+            APP_SRC = "lab1_ex2.cpp";
+            TRAMPOLINE_BASE_PATH = "../../../trampoline";
+            APP_NAME = "ex2_exe";
+
+            CPPCOMPILER = "avr-g++";
+            COMPILER = "avr-gcc";
+            LINKER = "avr-gcc";
+            ASSEMBLER = "avr-gcc";
+            COPIER = "avr-objcopy";
+            SYSTEM = PYTHON;
+        };
+        SYSTEM_CALL = TRUE;
+  };
+
+    APPMODE stdAppmode {};
+    ALARM a500msec 
+    {
+        COUNTER = SystemCounter;
+        ACTION = ACTIVATETASK { TASK = TaskA; };
+        AUTOSTART = TRUE { APPMODE = stdAppmode; ALARMTIME = 488; CYCLETIME = 488; };
+    };
+
+    ALARM a750msec 
+    {
+        COUNTER = SystemCounter;
+        ACTION = ACTIVATETASK { TASK = TaskB; };
+        AUTOSTART = TRUE { APPMODE = stdAppmode; ALARMTIME = 1464; CYCLETIME = 732; };
+    };
+
+    TASK TaskA 
+    {
+        PRIORITY = 2;
+        AUTOSTART = TRUE { APPMODE = stdAppmode; };
+        ACTIVATION = 1;
+        SCHEDULE = FULL;
+        STACKSIZE = 256;
+    };
+    TASK TaskB 
+    {
+        PRIORITY = 1;
+        AUTOSTART = FALSE;
+        ACTIVATION = 1;
+        SCHEDULE = FULL;
+        STACKSIZE = 256;
+    };
+};
