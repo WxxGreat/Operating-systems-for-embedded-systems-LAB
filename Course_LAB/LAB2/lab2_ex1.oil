@@ -1,0 +1,154 @@
+OIL_VERSION = "2.5" : "only_one_periodic_task" ;
+
+IMPLEMENTATION trampoline 
+{
+    /* This fix the default STACKSIZE of tasks */
+    TASK 
+    {
+        UINT32 STACKSIZE = 16384 ;
+    } ;
+    /* This fix the default STACKSIZE of ISRs */
+    ISR 
+    {
+        UINT32 STACKSIZE = 16384 ;
+    } ;
+};
+
+CPU only_one_periodic_task 
+{    
+    OS config 
+    {
+        STATUS = STANDARD;
+        BUILD = TRUE 
+        {
+            APP_SRC = "lab2_ex1.cpp";
+            TRAMPOLINE_BASE_PATH = "../../trampoline";
+            APP_NAME = "lab2_ex1_exe";
+
+            CPPCOMPILER = "avr-g++";
+            COMPILER = "avr-gcc";
+            LINKER = "avr-gcc";
+            ASSEMBLER = "avr-gcc";
+            COPIER = "avr-objcopy";
+            SYSTEM = PYTHON;
+        };
+        SYSTEM_CALL = TRUE;
+    };
+    APPMODE stdAppmode {};
+
+MESSAGE msg_sensor
+{
+    MESSAGEPROPERTY = SEND_STATIC_INTERNAL
+    {
+        CDATATYPE = "uint16";
+    };
+};
+
+MESSAGE msg_sensor_receive
+{
+    MESSAGEPROPERTY = RECEIVE_UNQUEUED_INTERNAL
+    {
+        SENDINGMESSAGE = msg_sensor;
+        FILTER = ALWAYS;
+        INITIALVALUE = 0x0000;
+    };
+    // TaskM 每 500ms 周期执行，可不使用 NOTIFICATION 激活
+};
+
+MESSAGE msg_led
+{
+    MESSAGEPROPERTY = SEND_STATIC_INTERNAL
+    {
+        CDATATYPE = "uint8";
+    };
+};
+
+MESSAGE msg_led_receive
+{
+    MESSAGEPROPERTY = RECEIVE_UNQUEUED_INTERNAL
+    {
+        SENDINGMESSAGE = msg_led;
+        FILTER = ALWAYS;
+        INITIALVALUE = 0x00;
+    };
+    // TaskV 每 125ms 周期执行，可不使用 NOTIFICATION 激活
+};
+
+
+
+    ALARM ALAM_100ms 
+    {
+        COUNTER = SystemCounter;
+        ACTION = ACTIVATETASK 
+        { 
+            TASK = TaskC; 
+        };
+        AUTOSTART = TRUE 
+        { 
+            APPMODE = stdAppmode; 
+            ALARMTIME = 20; 
+            CYCLETIME = 98; 
+        };
+    };
+    TASK TaskC 
+    {
+        PRIORITY = 3;
+        AUTOSTART = TRUE { APPMODE = stdAppmode; };
+        ACTIVATION = 1;
+        SCHEDULE = FULL;
+        STACKSIZE = 256;
+    };
+
+
+    ALARM ALAM_500ms 
+    {
+        COUNTER = SystemCounter;
+        ACTION = ACTIVATETASK 
+        { 
+            TASK = TaskM; 
+        };
+        AUTOSTART = TRUE 
+        { 
+            ALARMTIME = 20; 
+            CYCLETIME = 488; 
+            APPMODE = stdAppmode;
+        };
+    };
+    TASK TaskM 
+    {
+        PRIORITY = 2;      // 中优先级
+        SCHEDULE = FULL;
+        ACTIVATION = 1;
+        AUTOSTART = TRUE { APPMODE = stdAppmode; };
+        STACKSIZE = 256;
+    };
+
+
+    ALARM ALAM_125ms 
+    {
+        COUNTER = SystemCounter;
+        ACTION = ACTIVATETASK 
+        { 
+            TASK = TaskV; 
+        };
+        AUTOSTART = TRUE 
+        { 
+            ALARMTIME = 5; 
+            CYCLETIME = 122; 
+            APPMODE = stdAppmode;
+        };
+    };
+    TASK TaskV 
+    {
+        PRIORITY = 1;      // 最低优先级
+        SCHEDULE = FULL;
+        ACTIVATION = 1;
+        AUTOSTART  = TRUE { APPMODE = stdAppmode; };
+        STACKSIZE = 256;
+    };
+
+
+
+    
+};
+
