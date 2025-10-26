@@ -22,7 +22,7 @@ CPU only_one_periodic_task
         BUILD = TRUE 
         {
             APP_SRC = "lab2_ex1.cpp";
-            TRAMPOLINE_BASE_PATH = "../../trampoline";
+            TRAMPOLINE_BASE_PATH = "../../../trampoline";
             APP_NAME = "lab2_ex1_exe";
 
             CPPCOMPILER = "avr-g++";
