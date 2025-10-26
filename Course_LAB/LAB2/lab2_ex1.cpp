@@ -25,15 +25,11 @@ TASK(TaskC) //100ms
     uint16_t a0_val = analogRead(PIN_A0);
     uint8_t pressed_long;
 
-    if (digitalRead(12) == LOW)
-    {
-        press_count++;
-    }
-    else
-    {
-        press_count = 0;
-    }
-    pressed_long = (press_count >= 10) ? 1 : 0;
+    press_count = (digitalRead(12) == LOW) ? (press_count + 1) : 0;
+
+    pressed_long = (press_count >= 10) ? 1 : 0; // 10 * 100ms = 1s
+
+    // bits 0..9: a0_val, bit 12: pressed_long
     uint16_t msg = (a0_val & 0x3FF) | ((pressed_long ? 1 : 0) << 12);
 
     SendMessage(msg_sensor, &msg);
@@ -42,8 +38,7 @@ TASK(TaskC) //100ms
 }
 TASK(TaskM) //500ms
 {
-    static uint8_t ref_set = 0;
-    static uint16_t R = 0;
+    static int16_t R = -1;
 
     uint16_t sensor_msg;
     uint16_t a0_val;
@@ -57,34 +52,23 @@ TASK(TaskM) //500ms
     a0_val = sensor_msg & 0x03FF; // bits 0..9
     pressed_long = (sensor_msg & (1 << 12)) ? 1 : 0;
 
-    // 长按 -> 更新参考值
-    if (pressed_long)
+    
+    if (pressed_long)// 长按 -> 更新参考值
     {
         R = a0_val;
-        ref_set = 1;
     }
 
-    // 根据是否有参考值决定 LED 行为
-    if (!ref_set)
+    if (R == -1) // R==-1 meaning no reference "R" set
     {
         led_cmd = LED_ON; // LED 常亮
     }
     else
     {
-        X = (a0_val > R) ? (a0_val - R) : (R - a0_val);
+        X = abs((int16_t)a0_val - R);
 
-        if (X < 100)
-        {
-            led_cmd = LED_OFF; // LED 关
-        }
-        else if (X < 200)
-        {
-            led_cmd = LED_SLOW_BLINK; // 慢闪
-        }
-        else
-        {
-            led_cmd = LED_FAST_BLINK; // 快闪
-        }
+        led_cmd = (X < 100) ? LED_OFF :
+                  (X < 200) ? LED_SLOW_BLINK :
+                              LED_FAST_BLINK;
     }
 
     Serial.print("X: ");
@@ -113,8 +97,7 @@ TASK(TaskV) //125ms
                                        LED_OFF;                     
     }
 
-    // 根据当前模式驱动 LED
-    switch (current_mode)
+    switch (current_mode)// 根据当前模式驱动 LED
     {
     case LED_OFF: // LED 关
         digitalWrite(13, LOW);
