@@ -31,6 +31,8 @@ CPU only_one_periodic_task
             ASSEMBLER = "avr-gcc";
             COPIER = "avr-objcopy";
             SYSTEM = PYTHON;
+
+            LIBRARY = serial;
         };
         SYSTEM_CALL = TRUE;
     };
