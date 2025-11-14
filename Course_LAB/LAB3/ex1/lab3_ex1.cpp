@@ -2,6 +2,8 @@
 #include "Arduino.h"
 #include <stdlib.h>
 
+void MY_serial_print(unsigned long start, unsigned long end, unsigned long* max_resp_C);
+
 #define ON  1
 #define OFF 0
 #define LED1(state) digitalWrite(5, (state == ON) ? OFF : ON)
@@ -54,13 +56,10 @@ TASK(TaskC)
 {
     unsigned long start = 0;
     unsigned long end = 0;
-    unsigned long resp = 0;
-    static unsigned long activation_count = 0;
-    static unsigned long max_resp_C = 0;
     
-    LED3(ON);
+    static unsigned long max_resp_C = 0;
 
-    activation_count++;
+    LED3(ON);
 
     start = millis();
 
@@ -68,13 +67,26 @@ TASK(TaskC)
     do_things(300);
 
     end = millis();
-    resp = end - start;
+    
+    MY_serial_print(start, end, &max_resp_C);
 
-    if (resp > max_resp_C)
+    LED3(OFF);
+    /* Keep the task simple: terminate and wait for next alarm activation */
+    TerminateTask();
+}
+
+void MY_serial_print(unsigned long start, unsigned long end, unsigned long* max_resp_C)
+{
+    unsigned long resp = 0;
+    static unsigned long activation_count = 0;
+
+    activation_count++;
+    resp = end - start;
+    if (resp > *max_resp_C)
     {
-        max_resp_C = resp;
+        *max_resp_C = resp;
         Serial.print("[TaskC] New max response: ");
-        Serial.print(max_resp_C);
+        Serial.print(*max_resp_C);
         Serial.println(" ms");
     }
 
@@ -88,7 +100,4 @@ TASK(TaskC)
     Serial.print(" ms, resp=");
     Serial.print(resp);
     Serial.println(" ms");
-    LED3(OFF);
-    /* Keep the task simple: terminate and wait for next alarm activation */
-    TerminateTask();
 }

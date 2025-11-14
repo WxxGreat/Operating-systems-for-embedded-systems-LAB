@@ -57,7 +57,7 @@ CPU only_one_periodic_task
         { 
             APPMODE = stdAppmode; 
             /* first activation at 1 tick (~1.024 ms), then every 977 ticks (~1000 ms) */
-            ALARMTIME = 1; 
+            ALARMTIME = 977; 
             CYCLETIME = 977; 
         };
     };
@@ -71,7 +71,7 @@ CPU only_one_periodic_task
         AUTOSTART = TRUE 
         { 
             /* first activation at 1 tick (~1.024 ms), then every 1465 ticks (~1500 ms) */
-            ALARMTIME = 1; 
+            ALARMTIME = 1465; 
             CYCLETIME = 1465; 
             APPMODE = stdAppmode;
         };
@@ -86,7 +86,7 @@ CPU only_one_periodic_task
         AUTOSTART = TRUE 
         { 
             /* first activation at 1 tick (~1.024 ms), then every 2734 ticks (~2800 ms) */
-            ALARMTIME = 1; 
+            ALARMTIME = 2734; 
             CYCLETIME = 2734; 
             APPMODE = stdAppmode;
         };
@@ -118,9 +118,5 @@ CPU only_one_periodic_task
         AUTOSTART  = TRUE { APPMODE = stdAppmode; };
         STACKSIZE = 256;
     };
-
-
-
-    
 };
 
