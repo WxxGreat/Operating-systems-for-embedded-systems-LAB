@@ -1,0 +1,117 @@
+OIL_VERSION = "2.5" : "only_one_periodic_task" ;
+
+IMPLEMENTATION trampoline 
+{
+    /* This fix the default STACKSIZE of tasks */
+    TASK 
+    {
+        UINT32 STACKSIZE = 16384 ;
+    } ;
+    /* This fix the default STACKSIZE of ISRs */
+    ISR 
+    {
+        UINT32 STACKSIZE = 16384 ;
+    } ;
+};
+
+CPU only_one_periodic_task 
+{    
+    OS config 
+    {
+        STATUS = STANDARD;
+        BUILD = TRUE 
+        {
+            APP_SRC = "lab3_ex1.cpp";
+            TRAMPOLINE_BASE_PATH = "../../../trampoline";
+            APP_NAME = "lab3_ex1_exe";
+
+            CPPCOMPILER = "avr-g++";
+            COMPILER = "avr-gcc";
+            LINKER = "avr-gcc";
+            ASSEMBLER = "avr-gcc";
+            COPIER = "avr-objcopy";
+            SYSTEM = PYTHON;
+
+            LIBRARY = serial;
+        };
+        SYSTEM_CALL = TRUE;
+    };
+    APPMODE stdAppmode {};
+
+
+    ALARM ALAM_1000ms 
+    {
+        COUNTER = SystemCounter;
+        ACTION = ACTIVATETASK 
+        { 
+            TASK = TaskA; 
+        };
+        AUTOSTART = TRUE 
+        { 
+            APPMODE = stdAppmode; 
+            ALARMTIME = 977; 
+            CYCLETIME = 977; 
+        };
+    };
+    TASK TaskA
+    {
+        PRIORITY = 3;
+        AUTOSTART = TRUE { APPMODE = stdAppmode; };
+        ACTIVATION = 1;
+        SCHEDULE = FULL;
+        STACKSIZE = 256;
+    };
+
+
+    ALARM ALAM_1500ms 
+    {
+        COUNTER = SystemCounter;
+        ACTION = ACTIVATETASK 
+        { 
+            TASK = TaskB; 
+        };
+        AUTOSTART = TRUE 
+        { 
+            ALARMTIME = 1465; 
+            CYCLETIME = 1465; 
+            APPMODE = stdAppmode;
+        };
+    };
+    TASK TaskB 
+    {
+        PRIORITY = 2;
+        SCHEDULE = FULL;
+        ACTIVATION = 1;
+        AUTOSTART = TRUE { APPMODE = stdAppmode; };
+        STACKSIZE = 256;
+    };
+
+
+    ALARM ALAM_2800ms
+    {
+        COUNTER = SystemCounter;
+        ACTION = ACTIVATETASK 
+        { 
+            TASK = TaskC; 
+        };
+        AUTOSTART = TRUE 
+        { 
+            ALARMTIME = 2734; 
+            CYCLETIME = 2734; 
+            APPMODE = stdAppmode;
+        };
+    };
+    TASK TaskC
+    {
+        PRIORITY = 1;
+        SCHEDULE = FULL;
+        ACTIVATION = 1;
+        AUTOSTART  = TRUE { APPMODE = stdAppmode; };
+        STACKSIZE = 256;
+    };
+
+
+
+    
+};
+
