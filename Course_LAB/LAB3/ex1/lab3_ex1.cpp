@@ -2,12 +2,16 @@
 #include "Arduino.h"
 #include <stdlib.h>
 
+#define ON  1
+#define OFF 0
+#define LED1(state) digitalWrite(5, (state == ON) ? OFF : ON)
+#define LED2(state) digitalWrite(6, (state == ON) ? OFF : ON)
+#define LED3(state) digitalWrite(7, (state == ON) ? OFF : ON)
 
 void do_things(int ms)
 {
     unsigned long mul = ms * 504UL;
-    unsigned long i;
-    for(i=0; i<mul; i++) 
+    for (unsigned long i = 0; i < mul; i++)
     {
         millis();
     }
@@ -15,57 +19,76 @@ void do_things(int ms)
 
 void cleanOutput()
 {
-    digitalWrite(1, LOW);
-    digitalWrite(2, LOW);
-    digitalWrite(3, LOW);
+    LED1(OFF);
+    LED2(OFF);
+    LED3(OFF);
 }
 
 void setup()
 {
     Serial.begin(9600);
-	pinMode(1, OUTPUT);
-    pinMode(2, OUTPUT);
-    pinMode(3, OUTPUT);
+	pinMode(5, OUTPUT);
+    pinMode(6, OUTPUT);
+    pinMode(7, OUTPUT);
+    cleanOutput();
 }
 
 TASK(TaskA)
 {
-    digitalWrite(1, HIGH);
+    LED1(ON);
     do_things(200);
-    digitalWrite(1, LOW);
+    LED1(OFF);
     TerminateTask();
 }
 
 TASK(TaskB) 
 {
-    digitalWrite(2, HIGH);
+    LED2(ON);
     do_things(700);
-    digitalWrite(2, LOW);
+    LED2(OFF);
     TerminateTask();
 }
 
-TASK(TaskC) 
+
+TASK(TaskC)
 {
-    static unsigned long max_response_C = 0;
+    unsigned long start = 0;
+    unsigned long end = 0;
+    unsigned long resp = 0;
+    static unsigned long activation_count = 0;
+    static unsigned long max_resp_C = 0;
+    
+    LED3(ON);
 
-    digitalWrite(3, HIGH);
+    activation_count++;
 
-    unsigned long start = millis();
+    start = millis();
+
+    /* Simulate execution for 300 ms */
     do_things(300);
-    unsigned long end = millis();
 
-    unsigned long response = end - start;
-    if (response > max_response_C)
+    end = millis();
+    resp = end - start;
+
+    if (resp > max_resp_C)
     {
-        max_response_C = response;
+        max_resp_C = resp;
+        Serial.print("[TaskC] New max response: ");
+        Serial.print(max_resp_C);
+        Serial.println(" ms");
     }
 
-    Serial.print("Task C response: ");
-    Serial.print(response);
-    Serial.print(" ms | Max so far: ");
-    Serial.print(max_response_C);
+    /* Print the last activation times and response for tracing */
+    Serial.print("[TaskC] #");
+    Serial.print(activation_count);
+    Serial.print(" start=");
+    Serial.print(start);
+    Serial.print(" ms, end=");
+    Serial.print(end);
+    Serial.print(" ms, resp=");
+    Serial.print(resp);
     Serial.println(" ms");
-
-    digitalWrite(3, LOW);
+    LED3(OFF);
+    /* Keep the task simple: terminate and wait for next alarm activation */
     TerminateTask();
 }
