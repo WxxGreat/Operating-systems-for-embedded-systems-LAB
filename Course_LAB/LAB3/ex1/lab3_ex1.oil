@@ -1,20 +1,6 @@
-OIL_VERSION = "2.5" : "only_one_periodic_task" ;
+OIL_VERSION = "2.5" : "test" ;
 
-IMPLEMENTATION trampoline 
-{
-    /* This fix the default STACKSIZE of tasks */
-    TASK 
-    {
-        UINT32 STACKSIZE = 16384 ;
-    } ;
-    /* This fix the default STACKSIZE of ISRs */
-    ISR 
-    {
-        UINT32 STACKSIZE = 16384 ;
-    } ;
-};
-
-CPU only_one_periodic_task 
+CPU test 
 {    
     OS config 
     {
@@ -38,85 +24,48 @@ CPU only_one_periodic_task
     };
     APPMODE stdAppmode {};
 
-        /* NOTE about timing units:
-             - All ALARM times (ALARMTIME and CYCLETIME) are expressed in SystemCounter ticks,
-                 not in milliseconds. On the Trampoline/Arduino target a tick is ~= 1.024 ms.
-             - The CYCLETIME values below (977, 1465, 2734) correspond approximately to
-                 1000 ms, 1500 ms and 2800 ms respectively when converted: ticks * 1.024 ms.
-             - Using ALARMTIME = 1 starts the first activation at 1 tick after OS start
-                 (safer than 0 on some platforms) and is effectively 'ready at t~=0'. */
-
-    ALARM ALAM_1000ms 
+    ALARM a1000msec 
     {
         COUNTER = SystemCounter;
-        ACTION = ACTIVATETASK 
-        { 
-            TASK = TaskA; 
-        };
-        AUTOSTART = TRUE 
-        { 
-            APPMODE = stdAppmode; 
-            /* first activation at 1 tick (~1.024 ms), then every 977 ticks (~1000 ms) */
-            ALARMTIME = 977; 
-            CYCLETIME = 977; 
-        };
+        ACTION = ACTIVATETASK { TASK = TaskA; };
+        AUTOSTART = TRUE { APPMODE = stdAppmode; ALARMTIME = 977; CYCLETIME = 977; }; 
     };
-    ALARM ALAM_1500ms 
+    ALARM a1500msec 
+    { //DO NOT FORGET TO TRANSFORM THE TIME
+        COUNTER = SystemCounter;
+        ACTION = ACTIVATETASK { TASK = TaskB; };
+        AUTOSTART = TRUE { APPMODE = stdAppmode; ALARMTIME = 1465; CYCLETIME = 1465; }; 
+        //Activated each 1500ms (1465 ticks)  (1.024ms=1 ticks) 
+    };
+    ALARM a2800msec 
     {
         COUNTER = SystemCounter;
-        ACTION = ACTIVATETASK 
-        { 
-            TASK = TaskB; 
-        };
-        AUTOSTART = TRUE 
-        { 
-            /* first activation at 1 tick (~1.024 ms), then every 1465 ticks (~1500 ms) */
-            ALARMTIME = 1465; 
-            CYCLETIME = 1465; 
-            APPMODE = stdAppmode;
-        };
-    };
-    ALARM ALAM_2800ms
-    {
-        COUNTER = SystemCounter;
-        ACTION = ACTIVATETASK 
-        { 
-            TASK = TaskC; 
-        };
-        AUTOSTART = TRUE 
-        { 
-            /* first activation at 1 tick (~1.024 ms), then every 2734 ticks (~2800 ms) */
-            ALARMTIME = 2734; 
-            CYCLETIME = 2734; 
-            APPMODE = stdAppmode;
-        };
+        ACTION = ACTIVATETASK { TASK = TaskC; };
+        AUTOSTART = TRUE { APPMODE = stdAppmode; ALARMTIME = 2734; CYCLETIME = 2734; }; 
     };
 
-
-
-    TASK TaskA
+    //Priorities are assigned based on: shorter period gets higher priority
+    TASK TaskA 
     {
         PRIORITY = 3;
         AUTOSTART = TRUE { APPMODE = stdAppmode; };
         ACTIVATION = 1;
         SCHEDULE = FULL;
-        STACKSIZE = 256;
     };
+
     TASK TaskB 
     {
         PRIORITY = 2;
-        SCHEDULE = FULL;
-        ACTIVATION = 1;
         AUTOSTART = TRUE { APPMODE = stdAppmode; };
-        STACKSIZE = 256;
+        ACTIVATION = 1;
+        SCHEDULE = FULL;
     };
-    TASK TaskC
+
+        TASK TaskC 
     {
         PRIORITY = 1;
-        SCHEDULE = FULL;
+        AUTOSTART = TRUE { APPMODE = stdAppmode; };
         ACTIVATION = 1;
-        AUTOSTART  = TRUE { APPMODE = stdAppmode; };
-        STACKSIZE = 256;
+        SCHEDULE = FULL;
     };
 };
-

@@ -1,3 +1,4 @@
+#pragma optimize( "", off) // Disable optimizations for this file
 #include "tpl_os.h"
 #include "Arduino.h"
 #include <stdlib.h>
@@ -19,20 +20,15 @@ void do_things(int ms)
     }
 }
 
-void cleanOutput()
-{
-    LED1(OFF);
-    LED2(OFF);
-    LED3(OFF);
-}
-
 void setup()
 {
-    Serial.begin(9600);
 	pinMode(5, OUTPUT);
     pinMode(6, OUTPUT);
     pinMode(7, OUTPUT);
-    cleanOutput();
+    LED1(OFF);
+    LED2(OFF);
+    LED3(OFF);
+    Serial.begin(115200);
 }
 
 TASK(TaskA)
@@ -54,24 +50,17 @@ TASK(TaskB)
 
 TASK(TaskC)
 {
-    unsigned long start = 0;
-    unsigned long end = 0;
-    
     static unsigned long max_resp_C = 0;
-
+    unsigned long start = 0, end = 0;;
     LED3(ON);
 
     start = millis();
-
-    /* Simulate execution for 300 ms */
     do_things(300);
-
     end = millis();
     
     MY_serial_print(start, end, &max_resp_C);
 
     LED3(OFF);
-    /* Keep the task simple: terminate and wait for next alarm activation */
     TerminateTask();
 }
 
@@ -82,6 +71,7 @@ void MY_serial_print(unsigned long start, unsigned long end, unsigned long* max_
 
     activation_count++;
     resp = end - start;
+
     if (resp > *max_resp_C)
     {
         *max_resp_C = resp;
