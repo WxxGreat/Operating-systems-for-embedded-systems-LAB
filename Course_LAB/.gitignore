@@ -6,5 +6,6 @@
 !*.cpp
 !*.oil
 !*.sim1
+!*.m
 # Don't ignore .gitignore
 !.gitignore
