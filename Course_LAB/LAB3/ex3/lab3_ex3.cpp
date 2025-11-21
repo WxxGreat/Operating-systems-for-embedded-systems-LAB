@@ -84,11 +84,12 @@ TASK(TaskC)
     Serial.print("[C]start = ");
     Serial.println(start);
 
-    do_things(95);
+    do_things(97);
 
     blockResource(&resourceUsed);
-    start = millis();
+    
     Serial.print("[C]block = ");
+    start = millis();
     Serial.println(start);
 
     do_things(205);
