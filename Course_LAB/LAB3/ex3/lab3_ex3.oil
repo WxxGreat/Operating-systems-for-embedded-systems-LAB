@@ -69,7 +69,7 @@ CPU test
         AUTOSTART = TRUE { APPMODE = stdAppmode; };
         ACTIVATION = 1;
         SCHEDULE = FULL;
-        STACKSIZE = 256;
+        STACKSIZE = 128;
         MESSAGE = msgDataSend;
         MESSAGE = msgDataReceiveUnqueued;
 
@@ -80,7 +80,7 @@ CPU test
         AUTOSTART = TRUE { APPMODE = stdAppmode; };
         ACTIVATION = 1;
         SCHEDULE = FULL;
-        STACKSIZE = 256;
+        STACKSIZE = 128;
     };
     TASK TaskC 
     {
@@ -88,7 +88,7 @@ CPU test
         AUTOSTART = TRUE { APPMODE = stdAppmode; };
         ACTIVATION = 1;
         SCHEDULE = FULL;
-        STACKSIZE = 512;
+        STACKSIZE = 812;
         MESSAGE = msgDataSend;
         MESSAGE = msgDataReceiveUnqueued;
     };

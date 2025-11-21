@@ -1,17 +1,11 @@
-#pragma optimize( "", off)
 #include "tpl_os.h"
 #include "Arduino.h"
 #include <stdlib.h>
+typedef unsigned long u64 ;
 
-DeclareResource(TaskA_C_Resource);
+void MY_serial_print(u64 start, u64 end, u64* max_resp_C);
 
-void MY_serial_print(unsigned long start, unsigned long end, unsigned long* max_resp_C);
-
-#define ON  1
-#define OFF 0
-#define LED1(state) digitalWrite(5, (state == ON) ? OFF : ON)
-#define LED2(state) digitalWrite(6, (state == ON) ? OFF : ON)
-#define LED3(state) digitalWrite(7, (state == ON) ? OFF : ON)
+uint8_t resourceUsed = 0;
 
 void do_things(int ms)
 {
@@ -22,96 +16,106 @@ void do_things(int ms)
     }
 }
 
-void unlockResource(uint8* resourceUsed)
+void unlockResource(uint8* send_msg)
 {
-    *resourceUsed=0;
-    SendMessage(msgDataSend, resourceUsed);
+    *send_msg = 0;
+    SendMessage(msgDataSend, send_msg);
 }
-void blockResource(uint8* resourceUsed)
+void blockResource(uint8* rece_msg)
 {
-    while(*resourceUsed)
+    while(*rece_msg)
     {
-        ReceiveMessage(msgDataReceiveUnqueued, resourceUsed);
+        ReceiveMessage(msgDataReceiveUnqueued, rece_msg);
     }
-    *resourceUsed=1;
+    *rece_msg = 1;
 }
 
 void setup()
-{
-	pinMode(5, OUTPUT);
-    pinMode(6, OUTPUT);
-    pinMode(7, OUTPUT);
-    LED1(OFF);
-    LED2(OFF);
-    LED3(OFF);
+{   
     Serial.begin(115200);
-    uint8_t resourceUsed = 0;
-    SendMessage(msgDataSend, &resourceUsed);
+    uint8_t resource_init = 1;
+    SendMessage(msgDataSend, &resource_init);
 }
 
 TASK(TaskA)
 {
-    LED1(ON);
-    uint8 resourceUsed=1;
+    u64 start = 0, end = 0;
+
     blockResource(&resourceUsed);
+
+    start = millis();
+    Serial.print("[A]start = ");
+    Serial.println(start);
+
     do_things(200);
     unlockResource(&resourceUsed);
-    LED1(OFF);
+
+    end = millis();
+    Serial.print("[A]end   = ");
+    Serial.println(end);
+
     TerminateTask();
 }
 
 TASK(TaskB) 
 {
-    LED2(ON);
+    u64 start = 0, end = 0;
+
+    start = millis();
+    Serial.print("[B]start = ");
+    Serial.println(start);
+
     do_things(700);
-    LED2(OFF);
+
+    end = millis();
+    Serial.print("[B]end   = ");
+    Serial.println(end);
+
     TerminateTask();
 }
 
 
 TASK(TaskC)
 {
-    static unsigned long max_resp_C = 0;
-    unsigned long start = 0, end = 0;
-    uint8_t resourceUsed=1;
-    LED3(ON);
-    start = millis();
+    static u64 max_resp_C = 0;
+    u64 start = 0, end = 0;
 
-    do_things(100);
+    start = millis();
+    Serial.print("[C]start = ");
+    Serial.println(start);
+
+    do_things(95);
+
     blockResource(&resourceUsed);
-    do_things(200);
-    end = millis();
+    start = millis();
+    Serial.print("[C]block = ");
+    Serial.println(start);
+
+    do_things(205);
+
     unlockResource(&resourceUsed);
+
+    end = millis();
+    Serial.print("[C]end   = ");
+    Serial.println(end);
+
     MY_serial_print(start, end, &max_resp_C);
 
-    LED3(OFF);
     TerminateTask();
 }
     
-void MY_serial_print(unsigned long start, unsigned long end, unsigned long* max_resp_C)
+void MY_serial_print(u64 start, u64 end, u64* max_resp_C)
 {
-    unsigned long resp = 0;
-    static unsigned long activation_count = 0;
+    u64 resp = 0;
+    static u64 activation_count = 0;
 
     activation_count++;
     resp = end - start;
 
-    if (resp > *max_resp_C)
+    if (resp > *max_resp_C + 10)
     {
         *max_resp_C = resp;
-        Serial.print("[TaskC] New max response: ");
-        Serial.print(*max_resp_C);
-        Serial.println(" ms");
+        Serial.print("[C] New max response: ");
+        Serial.println(*max_resp_C);
     }
-
-    /* Print the last activation times and response for tracing */
-    Serial.print("[TaskC] #");
-    Serial.print(activation_count);
-    Serial.print(" start=");
-    Serial.print(start);
-    Serial.print(" ms, end=");
-    Serial.print(end);
-    Serial.print(" ms, resp=");
-    Serial.print(resp);
-    Serial.println(" ms");
 }
