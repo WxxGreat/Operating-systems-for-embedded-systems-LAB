@@ -33,61 +33,70 @@ void setup()
 
 TASK(TaskA)
 {
-    LED1(ON);
+    unsigned long start = 0, end = 0;
+
+    start = millis();
+    Serial.print("[TaskA]:start=");
+    Serial.println(start);
+
     do_things(200);
-    LED1(OFF);
+
+    
+    Serial.print("[TaskA]:end=");
+    end = millis();
+    Serial.println(end);
+
     TerminateTask();
 }
 
 TASK(TaskB) 
 {
-    LED2(ON);
+    unsigned long start = 0, end = 0;
+
+    start = millis();
+    Serial.print("[TaskB]:start=");
+    Serial.println(start);
+
     do_things(700);
-    LED2(OFF);
+
+    Serial.print("[TaskB]:end=");
+    end = millis();
+    Serial.println(end);
+
     TerminateTask();
 }
 
 
 TASK(TaskC)
 {
+    unsigned long start = 0, end = 0;
     static unsigned long max_resp_C = 0;
-    unsigned long start = 0, end = 0;;
-    LED3(ON);
 
     start = millis();
+    Serial.print("[TaskC]:start=");
+    Serial.println(start);
+
     do_things(300);
+
+    Serial.print("[TaskC]:end=");
     end = millis();
-    
+    Serial.println(end);
+
     MY_serial_print(start, end, &max_resp_C);
 
     LED3(OFF);
     TerminateTask();
 }
 
-void MY_serial_print(unsigned long start, unsigned long end, unsigned long* max_resp_C)
+void MY_serial_print(unsigned long start, unsigned long end, unsigned long* max)
 {
     unsigned long resp = 0;
-    static unsigned long activation_count = 0;
-
-    activation_count++;
     resp = end - start;
 
-    if (resp > *max_resp_C)
+    if (resp > *max)
     {
-        *max_resp_C = resp;
+        *max = resp;
         Serial.print("[TaskC] New max response: ");
-        Serial.print(*max_resp_C);
-        Serial.println(" ms");
+        Serial.println(*max);
     }
-
-    /* Print the last activation times and response for tracing */
-    Serial.print("[TaskC] #");
-    Serial.print(activation_count);
-    Serial.print(" start=");
-    Serial.print(start);
-    Serial.print(" ms, end=");
-    Serial.print(end);
-    Serial.print(" ms, resp=");
-    Serial.print(resp);
-    Serial.println(" ms");
 }

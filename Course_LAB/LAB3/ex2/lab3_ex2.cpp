@@ -3,9 +3,11 @@
 #include "Arduino.h"
 #include <stdlib.h>
 
+typedef unsigned long u64 ;
+
 DeclareResource(TaskA_C_Resource);
 
-void MY_serial_print(unsigned long start, unsigned long end, unsigned long* max_resp_C);
+void MY_serial_print(u64 start, u64 end, u64* max_resp_C);
 
 #define ON  1
 #define OFF 0
@@ -35,19 +37,27 @@ void setup()
 
 TASK(TaskA)
 {
-    LED1(ON);
+    u64 start = 0, end = 0;
+
     GetResource(TaskA_C_Resource);
+
+    Serial.print("[A]start = ");
+    start = millis();
+    Serial.println(start);
+
     do_things(200);
+
+    Serial.print("[A]end   = ");
+    end = millis();
+    Serial.println(end);
+
     ReleaseResource(TaskA_C_Resource);
-    LED1(OFF);
     TerminateTask();
 }
 
 TASK(TaskB) 
 {
-    LED2(ON);
     do_things(700);
-    LED2(OFF);
     TerminateTask();
 }
 
@@ -55,46 +65,38 @@ TASK(TaskB)
 TASK(TaskC)
 {
     static unsigned long max_resp_C = 0;
-    unsigned long start = 0, end = 0;;
-    LED3(ON);
+    unsigned long start = 0, end = 0;
+
+    Serial.print("[C]start = ");
     start = millis();
+    Serial.println(start);
 
     do_things(100);
     GetResource(TaskA_C_Resource);
+
     do_things(200);
+ 
+    Serial.print("[C]end   = ");
+    end = millis();
+    Serial.println(end);
+
     ReleaseResource(TaskA_C_Resource);
 
-    end = millis();
     MY_serial_print(start, end, &max_resp_C);
 
-    LED3(OFF);
+    //LED3(OFF);
     TerminateTask();
 }
     
-void MY_serial_print(unsigned long start, unsigned long end, unsigned long* max_resp_C)
+void MY_serial_print(u64 start, u64 end, u64* max_resp_C)
 {
-    unsigned long resp = 0;
-    static unsigned long activation_count = 0;
-
-    activation_count++;
+    u64 resp = 0;
     resp = end - start;
 
     if (resp > *max_resp_C)
     {
         *max_resp_C = resp;
         Serial.print("[TaskC] New max response: ");
-        Serial.print(*max_resp_C);
-        Serial.println(" ms");
+        Serial.println(*max_resp_C);
     }
-
-    /* Print the last activation times and response for tracing */
-    Serial.print("[TaskC] #");
-    Serial.print(activation_count);
-    Serial.print(" start=");
-    Serial.print(start);
-    Serial.print(" ms, end=");
-    Serial.print(end);
-    Serial.print(" ms, resp=");
-    Serial.print(resp);
-    Serial.println(" ms");
 }
