@@ -1,0 +1,81 @@
+OIL_VERSION = "2.5" : "only_one_periodic_task" ;
+
+CPU only_one_periodic_task 
+{    
+    OS config 
+    {
+        STATUS = STANDARD;
+        BUILD = TRUE 
+        {
+            APP_SRC = "lab4_ex1.cpp";
+            APP_SRC = "Queue_Process.cpp";
+            TRAMPOLINE_BASE_PATH = "../../../trampoline";
+            APP_NAME = "lab4_ex1_exe";
+            CPPCOMPILER = "avr-g++";
+            COMPILER = "avr-gcc";
+            LINKER = "avr-gcc";
+            ASSEMBLER = "avr-gcc";
+            COPIER = "avr-objcopy";
+            SYSTEM = PYTHON;
+            LIBRARY = serial;
+        };
+        SYSTEM_CALL = TRUE;
+    };
+    APPMODE stdAppmode {};
+
+
+    RESOURCE RES_SHARED 
+    {
+	    RESOURCEPROPERTY = STANDARD;
+    };
+
+
+    TASK TaskS 
+    {
+        PRIORITY = 3;
+        AUTOSTART = TRUE { APPMODE = stdAppmode; };
+        ACTIVATION = 1;
+        SCHEDULE = FULL;
+        STACKSIZE = 256;
+    };
+    TASK TaskB 
+    {
+        PRIORITY = 2;      // 中优先级
+        SCHEDULE = FULL;
+        ACTIVATION = 1;
+        AUTOSTART = TRUE { APPMODE = stdAppmode; };
+        STACKSIZE = 256;
+    };
+    TASK TaskV 
+    {
+        PRIORITY = 1;      // 最低优先级
+        SCHEDULE = FULL;
+        ACTIVATION = 1;
+        AUTOSTART  = TRUE { APPMODE = stdAppmode; };
+        STACKSIZE = 256;
+    };
+
+
+    ALARM ALAM_100ms 
+    {
+        COUNTER = SystemCounter;
+        ACTION = ACTIVATETASK { TASK = TaskS; };
+        AUTOSTART = TRUE 
+        { ALARMTIME = 98; CYCLETIME = 98; APPMODE = stdAppmode; };
+    };
+    ALARM ALAM_125ms 
+    {
+        COUNTER = SystemCounter;
+        ACTION = ACTIVATETASK { TASK = TaskV; };
+        AUTOSTART = TRUE 
+        { ALARMTIME = 122; CYCLETIME = 122; APPMODE = stdAppmode; };
+    };
+    ALARM ALAM_500ms 
+    {
+        COUNTER = SystemCounter;
+        ACTION = ACTIVATETASK { TASK = TaskB; };
+        AUTOSTART = TRUE 
+        { ALARMTIME = 488; CYCLETIME = 488; APPMODE = stdAppmode; };
+    };
+};
+

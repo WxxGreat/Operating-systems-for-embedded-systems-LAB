@@ -6,6 +6,31 @@
 !*.cpp
 !*.oil
 !*.sim1
+!*.simu
 !*.m
+!*.h
 # Don't ignore .gitignore
 !.gitignore
+
+# Ignore Trampoline-generated app directory and build artifacts for lab4_ex1
+LAB4/ex1/lab4_ex1/
+LAB4/ex1/lab4_ex1/**
+# Ignore build artifacts in ex1
+LAB4/ex1/lab4_ex1_exe
+LAB4/ex1/lab4_ex1_exe.hex
+
+# Ignore Trampoline-generated app directories and build artifacts for LAB3
+LAB3/ex1/lab3_ex1/
+LAB3/ex1/lab3_ex1/**
+LAB3/ex1/lab3_ex1_exe
+LAB3/ex1/lab3_ex1_exe.hex
+
+LAB3/ex2/lab3_ex2/
+LAB3/ex2/lab3_ex2/**
+LAB3/ex2/lab3_ex2_exe
+LAB3/ex2/lab3_ex2_exe.hex
+
+LAB3/ex3/lab3_ex3/
+LAB3/ex3/lab3_ex3/**
+LAB3/ex3/lab3_ex3_exe
+LAB3/ex3/lab3_ex3_exe.hex
