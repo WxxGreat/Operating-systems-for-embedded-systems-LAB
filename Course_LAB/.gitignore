@@ -1,0 +1,11 @@
+# Ignore everything
+*
+# Don't ignore directories, so we can recurse into them
+!*/
+# Don't ignore .cpp and .oil files
+!*.cpp
+!*.oil
+!*.sim1
+!*.m
+# Don't ignore .gitignore
+!.gitignore
