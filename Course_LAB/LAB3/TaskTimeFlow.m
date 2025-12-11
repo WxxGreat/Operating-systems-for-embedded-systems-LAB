@@ -143,3 +143,68 @@ xticklabels({'0','500','1000','1500','2000','2500','2800','3000','3500','4000','
 grid on;
 
 
+% ======================
+% RMS 调度任务时间线绘图
+% ======================
+
+clear; close all; clc;
+
+% 任务参数
+tasks = {'A','B','C'};
+period = [1000 1500 2800];
+exec   = [200  700  300 ];
+
+% 定义颜色（与示例接近）
+colors = [1   0.5  0.5;     % A 红
+          1   0.6  0.1;     % B 橙
+          0.2 0.8 0.2];     % C 绿
+
+% 手工调度结果（根据分析得出的 CPU 时间片）
+schedule = [
+    0   200   1;
+    200 900   2;
+    900 1200  3;
+    1200 1400 1;
+    1500 2000 2;
+    2000 2200 1;
+    2200 2400 2;
+    2800 3000 3;
+    3000 3700 2;
+    3700 3800 3;
+    3800 4000 1;
+    4000 4200 1;
+];
+figure('Position',[100 100 1200 350]); hold on; box on;
+title('Rate Monotonic Scheduling Timeline','FontSize',14);
+xlabel('Time (ms)'); ylabel('Task');
+yticks([1 2 3]); yticklabels({'Task A','Task B','Task C'});
+
+for i = 1:size(schedule,1)
+    t_start = schedule(i,1);
+    t_end   = schedule(i,2);
+    task_id = schedule(i,3);
+    rectangle('Position',[t_start, task_id-0.4, t_end-t_start, 0.8], ...
+              'FaceColor',colors(task_id,:), 'EdgeColor','none');
+    text((t_start+t_end)/2, task_id, sprintf('%s',tasks{task_id}), ...
+         'HorizontalAlignment','center','VerticalAlignment','middle',...
+         'FontWeight','bold','Color','k');
+end
+
+% 画任务释放点
+for i = 1:5  
+    xline((i-1)*period(1),'--r');
+end
+for i = 1:4
+    xline((i-1)*period(2),'--','Color',[1 0.6 0]);
+end
+for i = 1:3
+    xline((i-1)*period(3),'--g');
+end
+
+xlim([0 4500]);
+ylim([0.5 3.5]);
+% 手动设置 X 轴刻度
+xticks([0 500 1000 1500 2000 2500 2800 3000 3500 4000 4500]);
+xticklabels({'0','500','1000','1500','2000','2500','2800','3000','3500','4000','4500'});
+
+hold off;
