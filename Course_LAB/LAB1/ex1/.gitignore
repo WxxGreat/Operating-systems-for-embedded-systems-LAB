@@ -5,7 +5,7 @@
 # Don't ignore .cpp and .oil files
 !*.cpp
 !*.oil
-!*.json
+!trace.json
 !*.sim1
 # Don't ignore .gitignore
 !.gitignore

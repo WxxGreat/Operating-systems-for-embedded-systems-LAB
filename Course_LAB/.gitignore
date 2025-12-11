@@ -9,6 +9,7 @@
 !*.simu
 !*.m
 !*.h
+!*.sh
 # Don't ignore .gitignore
 !.gitignore
 
@@ -38,3 +39,18 @@ LAB3/ex3/lab3_ex3/
 LAB3/ex3/lab3_ex3/**
 LAB3/ex3/lab3_ex3_exe
 LAB3/ex3/lab3_ex3_exe.hex
+
+LAB2/ex1/lab2_ex1/
+LAB2/ex1/lab2_ex1/**
+LAB2/ex1/lab2_ex1_exe
+LAB2/ex1/lab2_ex1_exe.hex
+
+LAB2/ex2/lab2_ex2/
+LAB2/ex2/lab2_ex2/**
+LAB2/ex2/lab2_ex2_exe
+LAB2/ex2/lab2_ex2_exe.hex
+
+LAB1/ex2/lab1_ex2/
+LAB1/ex2/lab1_ex2/**
+LAB1/ex2/lab1_ex2_exe
+LAB1/ex2/lab1_ex2_exe.hex
