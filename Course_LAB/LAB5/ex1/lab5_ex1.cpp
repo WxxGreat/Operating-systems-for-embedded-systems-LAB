@@ -21,9 +21,6 @@ typedef struct
 
 static shared_data_t shared = { {0}, 0, 0 };
 
-
-
-
 void timerInit() // interrupt each 1ms
 {
     TCCR2A = 0;
@@ -57,22 +54,42 @@ TASK(TaskS) //1ms
     static bool digit_error = false;     // whether any pulse in digit had width error
     static bool digit_finalized = false; // whether current digit was already printed
     static bool printed_slash = false;   // whether '/' was printed for current number
-
     bool high = is_high();
 
     if (high) // in is_high pulse
     {
-        high_ms++;
-        low_ms = 0;
         if (!prev_high) // rising edge
         {
-            high_ms = 1;
             // starting a new pulse after a long low means new number/digit started
-            if (low_ms >= 200)
+            if (low_ms >= 200) printed_slash = false;
+
+            if (low_ms >= 100 && low_ms < 200) // digit separator: low gap between 100 and 200 ms
             {
-                printed_slash = false;
+                if (!digit_finalized && pulse_count > 0)
+                {
+                    // finalize digit and append directly to shared buffer
+                    uint8_t digit = (pulse_count == 10) ? 0 : pulse_count;
+                    uint16_t pkt = (uint16_t)digit;
+                    if (digit_error) pkt |= PKT_ERR_FLAG;
+                    GetResource(RES_PBUF);
+                    if (shared.shared_count < (sizeof(shared.shared_buf)/sizeof(shared.shared_buf[0])))
+                    {
+                        shared.shared_buf[shared.shared_count++] = pkt;
+                    }
+                    else
+                    {
+                        shared.overflow = 1;
+                    }
+                    ReleaseResource(RES_PBUF);
+                    // reset for next digit
+                    pulse_count = 0;
+                    digit_error = false;
+                    digit_finalized = true;
+                }
             }
         }
+
+        high_ms++;
         // detect too long pulses early while still high
         if (high_ms > 60)
         {
@@ -81,48 +98,21 @@ TASK(TaskS) //1ms
     }
     else // in low pulse
     {
-        low_ms++;
         if (prev_high) // falling edge -> end of a is_high pulse
         {
-            uint16_t pulse_len = high_ms; // ms
+            low_ms = 0;
             pulse_count++;
             // short pulses (<40ms) are errors; long pulses (>60ms) are
             // already detected while still high (high_ms > 60), so
             // only check the short condition here to avoid duplicate checks.
-            if (pulse_len < 40)
+            if (high_ms < 40)
             {
                 digit_error = true;
             }
             high_ms = 0;// reset is_high counter
         }
+        low_ms++;
 
-        // digit separator: low gap between 100 and 200 ms
-        if (low_ms >= 100 && low_ms < 200)
-        {
-            if (!digit_finalized && pulse_count > 0)
-            {
-                // finalize digit and append directly to shared buffer
-                uint8_t digit = (pulse_count == 10) ? 0 : pulse_count;
-                uint16_t pkt = (uint16_t)digit;
-                if (digit_error) pkt |= PKT_ERR_FLAG;
-                GetResource(RES_PBUF);
-                if (shared.shared_count < (sizeof(shared.shared_buf)/sizeof(shared.shared_buf[0])))
-                {
-                    shared.shared_buf[shared.shared_count++] = pkt;
-                }
-                else
-                {
-                    shared.overflow = 1;
-                }
-                ReleaseResource(RES_PBUF);
-                // reset for next digit
-                pulse_count = 0;
-                digit_error = false;
-                digit_finalized = true;
-            }
-        }
-
-        
         if (low_ms >= 200) // end of number: low gap >200ms
         {
             if (pulse_count > 0 && !digit_finalized)
