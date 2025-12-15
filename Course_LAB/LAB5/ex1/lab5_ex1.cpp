@@ -26,6 +26,16 @@ typedef enum {
     ST_LOW_GAP        // 数字间 or 号码结束的低电平
 } fsm_state_t;
 
+typedef struct
+{
+    fsm_state_t state;
+    uint16_t high_ms;
+    uint16_t low_ms;
+    uint8_t  pulse_count;
+    bool     digit_error;
+} dial_fsm_t;
+void dial_fsm_step(dial_fsm_t *fsm, bool high);
+
 void timerInit() // interrupt each 1ms
 {
     TCCR2A = 0;
@@ -80,80 +90,10 @@ static void finalize_number(void)
 
 TASK(TaskS) // 1ms
 {
-    static fsm_state_t state = ST_IDLE;
-    static uint16_t high_ms = 0;
-    static uint16_t low_ms  = 0;
-    static uint8_t  pulse_count = 0;  // pulses in current digit
-    static bool     digit_error = false;
+    static dial_fsm_t dial_fsm = { ST_IDLE, 0, 0, 0, false };
     bool high = is_high();
 
-    switch (state)
-    {
-    case ST_IDLE:
-        if (high)
-        {
-            high_ms = 1;
-            state = ST_HIGH;
-        }
-        break;
-
-    case ST_HIGH:
-        if (high)
-        {
-            high_ms++;
-            if (high_ms > 60)
-            {
-                digit_error = true;
-            }
-        }
-        else
-        {
-            if (high_ms < 40)
-            {
-                digit_error = true;
-            }
-            pulse_count++;
-            high_ms = 0;
-            low_ms = 1;
-            state = ST_LOW_IN_DIGIT;
-        }
-        break;
-
-    case ST_LOW_IN_DIGIT:
-        if (!high)
-        {
-            low_ms++;
-            if (low_ms >= 100)
-            {
-                finalize_digit(&pulse_count,&digit_error);
-                state = ST_LOW_GAP;
-            }
-        }
-        else
-        {
-            high_ms = 1;
-            state = ST_HIGH;
-        }
-        break;
-
-    case ST_LOW_GAP:
-        if (!high)
-        {
-            low_ms++;
-            if (low_ms > 200)
-            {
-                finalize_number();
-                state = ST_IDLE;
-            }
-        }
-        else
-        {
-            low_ms = 0;
-            high_ms = 1;
-            state = ST_HIGH;
-        }
-        break;
-    }
+    dial_fsm_step(&dial_fsm, high);
 
     TerminateTask();
 }
@@ -205,4 +145,77 @@ TASK(TaskV) //125ms
     } while (ret == E_OK);
 
     TerminateTask();
+}
+
+
+void dial_fsm_step(dial_fsm_t *fsm, bool high)
+{
+    switch (fsm->state)
+    {
+    case ST_IDLE:
+        if (high)
+        {
+            fsm->high_ms = 1;
+            fsm->state = ST_HIGH;
+        }
+        break;
+
+    case ST_HIGH:
+        if (high)
+        {
+            fsm->high_ms++;
+            if (fsm->high_ms > 60)
+            {
+                fsm->digit_error = true;
+            }
+        }
+        else
+        {
+            if (fsm->high_ms < 40)
+            {
+                fsm->digit_error = true;
+            }
+
+            fsm->pulse_count++;
+            fsm->high_ms = 0;
+            fsm->low_ms = 1;
+            fsm->state = ST_LOW_IN_DIGIT;
+        }
+        break;
+
+    case ST_LOW_IN_DIGIT:
+        if (!high)
+        {
+            fsm->low_ms++;
+            if (fsm->low_ms >= 100)
+            {
+                finalize_digit(&fsm->pulse_count, &fsm->digit_error);
+                fsm->state = ST_LOW_GAP;
+            }
+        }
+        else
+        {
+            fsm->high_ms = 1;
+            fsm->state = ST_HIGH;
+        }
+        break;
+
+    case ST_LOW_GAP:
+        if (!high)
+        {
+            fsm->low_ms++;
+            if (fsm->low_ms > 200)
+            {
+                finalize_number();
+                fsm->state = ST_IDLE;
+            }
+        }
+        else
+        {
+            fsm->low_ms = 0;
+            fsm->high_ms = 1;
+            fsm->state = ST_HIGH;
+        }
+        break;
+    }
 }
