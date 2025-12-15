@@ -99,50 +99,33 @@ TASK(TaskS) // 1ms
 }
 
 
-TASK(TaskV) //125ms
+TASK(TaskV)
 {
-    uint16_t pkt = 0;
-    StatusType ret;
-    // At end-of-number, TaskS sends PKT_SLASH and copies digits into shared_buf.
-    // Here we only handle PKT_SLASH: copy shared buffer under RES_PBUF and print it.
-    do {
-        ret = ReceiveMessage(msg_print_receive, &pkt);
-        if (ret == E_OK)
-        {
-            if (pkt == PKT_SLASH)
-            {
-                uint16_t local_buf[32];
-                uint8_t local_count = 0;
-                uint8_t local_overflow = 0;
-                // copy shared buffer and overflow flag under protection
-                GetResource(RES_PBUF);
-                for (uint8_t i = 0; i < shared.shared_count && i < (sizeof(local_buf)/sizeof(local_buf[0])); ++i)
-                {
-                    local_buf[i] = shared.shared_buf[i];
-                }
-                local_count = shared.shared_count;
-                local_overflow = shared.overflow;
-                shared.shared_count = 0;
-                shared.overflow = 0;
-                ReleaseResource(RES_PBUF);
+    uint16_t pkt;
 
-                // now print without holding resource
-                for (uint8_t i = 0; i < local_count; ++i)
-                {
-                    uint8_t digit = local_buf[i] & PKT_DIGIT_MASK;
-                    bool err = (local_buf[i] & PKT_ERR_FLAG) != 0;
-                    Serial.print(digit);
-                    if (err) Serial.print('*');
-                }
-                if (local_overflow) Serial.print('!');
-                Serial.println("/");
-            }
-            else
-            {
-                // ignore unexpected packets — we only expect PKT_SLASH now
-            }
+    if (ReceiveMessage(msg_print_receive, &pkt) == E_OK)
+    {
+        uint8_t n;
+        bool overflow;
+
+        GetResource(RES_PBUF);
+        n = shared.shared_count;
+        overflow = shared.overflow;
+        uint16_t buf[n];
+        memcpy(buf, shared.shared_buf, n * sizeof(uint16_t));
+        shared.shared_count = 0;
+        shared.overflow = 0;
+        ReleaseResource(RES_PBUF);
+
+        for (uint8_t i = 0; i < n; i++)
+        {
+            Serial.print(buf[i] & PKT_DIGIT_MASK);
+            if (buf[i] & PKT_ERR_FLAG) Serial.print('*');
         }
-    } while (ret == E_OK);
+
+        if (overflow) Serial.print('!');
+        Serial.println("/");
+    }
 
     TerminateTask();
 }
