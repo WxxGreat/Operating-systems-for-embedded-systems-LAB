@@ -14,6 +14,11 @@
 !.gitignore
 
 # Ignore Trampoline-generated app directory and build artifacts for lab4_ex1
+LAB5/ex1/lab5_ex1/
+LAB5/ex1/lab5_ex1/**
+LAB5/ex1/lab5_ex1_exe
+LAB5/ex1/lab5_ex1_exe.hex
+
 LAB4/ex1/lab4_ex1/
 LAB4/ex1/lab4_ex1/**
 LAB4/ex1/lab4_ex1_exe

@@ -1,0 +1,93 @@
+OIL_VERSION = "2.5" : "only_one_periodic_task" ;
+
+CPU only_one_periodic_task 
+{    
+    OS config 
+    {
+        STATUS = STANDARD;
+        BUILD = TRUE 
+        {
+            APP_SRC = "lab5_ex1.cpp";
+            TRAMPOLINE_BASE_PATH = "../../../trampoline";
+            APP_NAME = "lab5_ex1_exe";
+            LDFLAGS = "-Wl,-Map=counter.map";
+            CPPCOMPILER = "avr-g++";
+            COMPILER = "avr-gcc";
+            LINKER = "avr-gcc";
+            ASSEMBLER = "avr-gcc";
+            COPIER = "avr-objcopy";
+            SYSTEM = PYTHON;
+            LIBRARY = serial;
+        };
+        SYSTEM_CALL = TRUE;
+    };
+    APPMODE stdAppmode {};
+
+    MESSAGE msg_print
+    {
+        MESSAGEPROPERTY = SEND_STATIC_INTERNAL {
+            CDATATYPE = "uint16";
+        };
+    };
+    MESSAGE msg_print_receive
+    {
+        MESSAGEPROPERTY = RECEIVE_QUEUED_INTERNAL
+        {
+            SENDINGMESSAGE = msg_print;
+            FILTER = ALWAYS;
+            INITIALVALUE = 0;
+            QUEUESIZE = 8;
+        };
+    };
+
+    COUNTER MyCustomCounter 
+    {
+        SOURCE = TIMER2_OVF;
+        TICKSPERBASE = 1;
+        MAXALLOWEDVALUE = 512;
+        MINCYCLE = 1;
+    };
+
+    RESOURCE RES_PBUF
+    {
+        RESOURCEPROPERTY = STANDARD;
+    };
+
+
+    ALARM ALAM_1ms 
+    {
+        COUNTER= MyCustomCounter;
+        ACTION = ACTIVATETASK { TASK = TaskS; };
+        AUTOSTART = TRUE 
+        { ALARMTIME = 1; CYCLETIME = 1; APPMODE = stdAppmode; };
+    };
+    ALARM ALAM_100ms 
+    {
+        COUNTER= MyCustomCounter;
+        ACTION = ACTIVATETASK { TASK = TaskV; };
+        AUTOSTART = TRUE 
+        { ALARMTIME = 100; CYCLETIME = 100; APPMODE = stdAppmode; };
+    };
+
+
+    TASK TaskS 
+    {
+        PRIORITY = 2;
+        AUTOSTART = TRUE { APPMODE = stdAppmode; };
+        ACTIVATION = 1;
+        SCHEDULE = FULL;
+        STACKSIZE = 256;
+        MESSAGE = msg_print;
+    };
+    TASK TaskV 
+    {
+        PRIORITY = 1;      // 最低优先级
+        SCHEDULE = FULL;
+        ACTIVATION = 1;
+        AUTOSTART  = TRUE { APPMODE = stdAppmode; };
+        STACKSIZE = 256;
+        MESSAGE = msg_print_receive;
+    };
+
+};
+
